@@ -4,9 +4,9 @@
 	<script src='https://docs.opencv.org/3.4.0/opencv.js'></script>
 	</head>
 	<body>
-		<video id='videoInput'></video> 
-		<canvas id='canvasFrame'></canvas>
-		<canvas id='canvasOutput'></canvas>
+		<video id='videoInput'></video>
+		<canvas id='canvasFrame' width=640 height=480></canvas>
+		<canvas id='canvasOutput' width=640 height=480></canvas>
 		<script>
 		let video = document.getElementById("videoInput");
 		navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -17,69 +17,34 @@
 		    .catch(function(err) {
 		        console.log("An error occurred! " + err);
 		    });
-		let canvasFrame = document.getElementById("canvasFrame"); 
+		let canvasFrame = document.getElementById("canvasFrame");
 		let context = canvasFrame.getContext("2d");
 		let height = canvasFrame.height;
 		let width = canvasFrame.width;
 		let src = new cv.Mat(height, width, cv.CV_8UC4);
 		let dst = new cv.Mat(height, width, cv.CV_8UC1);
+		let start_time = 0
 		const FPS = 30;
-		
-		function Blink() {
-			let self = {};
-	        self.start=0 //frame
-            self.startEAR=1
-            self.peak=0  //frame
-            self.peakEAR = 1
-            self.end=0   //frame
-            self.endEAR=0
-            self.amplitude= (self.startEAR+self.endEAR-2*self.peakEAR)/2
-            self.duration = self.end-self.start+1
-            self.EAR_of_FOI=0 //FrameOfInterest
-            self.values=[]
-            self.velocity=0  //Eye-closing velocity	
-            return self();
-		}
-	
-
-		
-		function blink_detector() {
-			const FRAME_MARGIN_BTW_2BLINKS=3
-		    const MIN_AMPLITUDE=0.04
-		    const MOUTH_AR_THRESH=0.35
-		    const MOUTH_AR_THRESH_ALERT=0.30
-		    const MOUTH_AR_CONSEC_FRAMES=20
-		
-		    const EPSILON=0.01  // for discrete derivative (avoiding zero derivative)
-		    
-				COUNTER = 0;
-			    MCOUNTER=0;
-			    TOTAL = 0;
-			    MTOTAL=0;
-			    TOTAL_BLINKS=0;
-			    Counter4blinks=0;
-			    skip=false; 
-			    Last_Blink=Blink();
-		}
-		
 		function processVideo() {
 		    let begin = Date.now();
+			let inter_frame_time = begin - start_time;
+			start_time = begin
 		    context.drawImage(video, 0, 0, width, height);
 		    src.data.set(context.getImageData(0, 0, width, height).data);
 		    cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
 		    cv.imshow("canvasOutput", dst); // canvasOutput is the id of another <canvas>;
 		    // schedule next one.
+			let process_time = Date.now()-begin;
+			console.log("process_tiem: "+process_time+" frame-to-frame: "+inter_frame_time);
 		    let delay = 1000/FPS - (Date.now() - begin);
-		    
-		    blink_detector()
-		    
 		    setTimeout(processVideo, delay);
 		}
-		
 
+		// Print out info
+		console.log("height: "+height+" width: "+width)
 		// // schedule first one.
 		setTimeout(processVideo, 0);
-		    
+
 		</script>
 	</body>
 </html>
